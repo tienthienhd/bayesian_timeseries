@@ -109,8 +109,8 @@ def run(params):
                           params['epochs'], verbose=2)
 
     # plot history
-    histor = pd.DataFrame(history)
-    print(histor.describe())
+    # histor = pd.DataFrame(history)
+    # print(histor.describe())
     # history.loc[:, ['loss', 'val_loss']].plot()
     plt.plot(history['loss'], label='loss')
     plt.plot(history['val_loss'], label='val_loss')
