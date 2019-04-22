@@ -20,7 +20,7 @@ recurrent_dropout = [0.05, 0.8]
 batch_size = [8, 16, 32, 64, 128]
 learning_rate = [0.000001, 1]
 cell_type = ['lstm']
-epochs = 10
+epochs = 500
 
 
 def next_config():
@@ -161,5 +161,5 @@ def mutil_running(num_configs=1, n_jobs=1):
     pool.terminate()
 
 
-mutil_running(num_configs=2, n_jobs=2)
+mutil_running(num_configs=200, n_jobs=-1)
 
