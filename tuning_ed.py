@@ -106,7 +106,7 @@ def run(params):
     model.build_model(params)
     history = model.train(x_train, y_train,
                           params['batch_size'],
-                          params['epochs'], verbose=2)
+                          params['epochs'], verbose=0)
 
     # plot history
     # histor = pd.DataFrame(history)
@@ -161,5 +161,5 @@ def mutil_running(num_configs=1, n_jobs=1):
     pool.terminate()
 
 
-mutil_running(num_configs=200, n_jobs=-1)
+mutil_running(num_configs=200, n_jobs=8)
 
