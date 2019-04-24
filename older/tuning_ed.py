@@ -2,23 +2,23 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from dataset import GgTraceDataSet, split_data
-from ed_model import EDModel
+from older.ed_model import EDModel
 import multiprocessing as mp
 
 sliding_encoder = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40]
 sliding_decoder = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+# sliding_encoder = list(range(4, 100, 2))
+# sliding_decoder = list(range(2, 50, 2))
 layer_unit = list(range(0, 128))
-num_layer = [1, 2]
-activation = ['tanh', 'sigmoid', 'relu']
+num_layer = [1, 2, 3]
+activation = ['tanh', 'sigmoid']
 optimizer = ['adam', 'rmsprop']
+dropout = [0.05, 0.8]
+recurrent_dropout = [0.05, 0.8]
 batch_size = [8, 16, 32, 64, 128]
+learning_rate = [0.000001, 1]
 cell_type = ['lstm']
 epochs = 500
-input_keep_prob = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
-output_keep_prob = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
-state_keep_prob = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
-learning_rate = [0.0001, 0.001, 0.01, 0.1]
-patience = 15
 
 
 def next_config():
@@ -53,10 +53,9 @@ def next_config():
     # Activation
     ac = random.choice(activation)
     op = random.choice(optimizer)
-    inkprob = random.choice(input_keep_prob)
-    outkprob = random.choice(output_keep_prob)
-    statekprob = random.choice(state_keep_prob)
-    lr = random.choice(learning_rate)
+    drop = random.uniform(dropout[0], dropout[1])
+    rdrop = random.uniform(recurrent_dropout[0], recurrent_dropout[1])
+    lr = random.uniform(learning_rate[0], learning_rate[1])
     bs = random.choice(batch_size)
     ct = random.choice(cell_type)
 
@@ -66,14 +65,12 @@ def next_config():
         'layer_sizes_ed': layer_sizes,
         'activation': ac,
         'optimizer': op,
-        'input_keep_prob': inkprob,
-        'output_keep_prob': outkprob,
-        'state_keep_prob': statekprob,
+        'dropout': drop,
+        'recurrent_dropout': rdrop,
         'batch_size': bs,
         'learning_rate': lr,
         'epochs': epochs,
         'cell_type': ct,
-        'patience': patience,
     }
     return config
 
@@ -90,27 +87,24 @@ def run(params):
     x_test = (test[0], test[1])
     y_test = test[2]
 
-    model_name = "sle({})_sld({})_ls({})_ac({})_opt({})_ikp({})_okp({})_skp({})_bs({})_lr({})_ct({})".format(
+    model_name = "sle({})_sld({})_ls({})_ac({})_opt({})_drop({})_rdrop({})_bs({})_lr({})_ct({})".format(
         params['sliding_encoder'],
         params['sliding_decoder'],
         params['layer_sizes_ed'],
         params['activation'],
         params['optimizer'],
-        params['input_keep_prob'],
-        params['output_keep_prob'],
-        params['state_keep_prob'],
+        params['dropout'],
+        params['recurrent_dropout'],
         params['batch_size'],
         params['learning_rate'],
         params['cell_type']
     )
-    print('Running config: ' + model_name)
 
     model = EDModel('logs/' + model_name)
     model.build_model(params)
     history = model.train(x_train, y_train,
-                          batch_size=params['batch_size'],
-                          epochs=params['epochs'], verbose=1)
-    model.save()
+                          params['batch_size'],
+                          params['epochs'], verbose=0)
 
     # plot history
     # histor = pd.DataFrame(history)
@@ -165,31 +159,5 @@ def mutil_running(num_configs=1, n_jobs=1):
     pool.terminate()
 
 
-test_config = {
-        'sliding_encoder': 4,
-        'sliding_decoder': 2,
-        'layer_sizes_ed': [8],
-        'activation': 'tanh',
-        'optimizer': 'adam',
-        'input_keep_prob': 0.7,
-        'output_keep_prob': 0.7,
-        'state_keep_prob': 0/7,
-        'batch_size': 32,
-        'learning_rate': 0.001,
-        'epochs': 2,
-        'cell_type': 'lstm',
-}
-
-
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('--test', default=False, type=bool)
-parser.add_argument('--n_jobs', default=1, type=int)
-parser.add_argument('--n_configs', default=1, type=int)
-args = parser.parse_args()
-
-if args.test:
-    run(test_config)
-else:
-    mutil_running(num_configs=args.n_configs, n_jobs=args.n_jobs)
+mutil_running(num_configs=200, n_jobs=8)
 

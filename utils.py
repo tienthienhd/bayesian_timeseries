@@ -1,4 +1,6 @@
 import tensorflow as tf
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def early_stop(array, idx, patience=1, min_delta=0.0):
@@ -52,3 +54,35 @@ def transform_cell_type(cell_type):
         return tf.nn.rnn_cell.MultiRNNCell
     else:
         raise Exception("Don't exists cell type:" + cell_type)
+
+
+def plot_predicts(actual, predict):
+    assert np.ndim(actual) == np.ndim(predict)
+    ndim = np.ndim(actual)
+    if ndim == 3:
+        actual = actual[:, -1, -1]
+        predict = predict[:, -1, -1]
+    elif ndim == 2:
+        actual = actual[:, -1]
+        predict = predict[:, -1]
+
+    plt.plot(actual, label='actual')
+    plt.plot(predict, label='predict')
+    plt.legend()
+    plt.xlabel('time')
+    plt.ylabel('value')
+    plt.title('Predict')
+    plt.show()
+
+
+def plot_history(lines, labels):
+    assert len(lines) == len(labels)
+    for key, value in zip(labels, lines):
+        plt.plot(value, label=key)
+
+    plt.legend()
+    plt.show()
+
+# a = np.array([1, 2, 3, 4, 5])
+# b = np.array([2, 3, 4, 5, 6])
+# plot_history({'a':a, 'b':b})
