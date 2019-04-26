@@ -14,7 +14,7 @@ dict_config = {
     "optimizer": ['adam', 'rmsprop'],
     "batch_size": [8, 16, 32, 64],
     "cell_type": ['lstm'],
-    "epochs": [2],
+    "epochs": [500],
     "keep_probs": [0.95],
     "learning_rate": [0.0001, 0.001, 0.01],
     "patience": [15],
