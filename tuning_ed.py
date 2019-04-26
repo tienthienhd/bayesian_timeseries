@@ -79,6 +79,7 @@ def run(params):
     plt.xlabel('time')
     plt.ylabel('value')
     plt.legend()
+    plt.title('mae=' + str(mae))
     plt.savefig('logs/' + model_name + '_predict.png')
     plt.clf()
 
@@ -104,17 +105,15 @@ def mutil_running(list_configs, n_jobs=1):
 
 
 test_config = {
-    'sliding_encoder': 30,
-    'sliding_decoder': 6,
+    'sliding_encoder': 12,
+    'sliding_decoder': 4,
     'layer_sizes_ed': [64, 16],
     'activation': 'tanh',
     'optimizer': 'rmsprop',
-    'input_keep_prob': 0.95,
-    'output_keep_prob': 0.95,
-    'state_keep_prob': 0.95,
-    'batch_size': 2,
+    'keep_probs': 0.95,
+    'batch_size': 8,
     'learning_rate': 0.001,
-    'epochs': 200,
+    'epochs': 20,
     'cell_type': 'lstm',
     'patience': 2
 }
