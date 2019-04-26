@@ -16,9 +16,7 @@ class EDModel(object):
         self.layer_sizes_ed = []
         self.n_dim = 0
         self.activation = tf.nn.relu
-        self.input_keep_prob = 1
-        self.output_keep_prob = 1
-        self.state_keep_prob = 1
+        self.keep_probs = 1
         # self.variational_recurrent = False
         self.cell_type = tf.nn.rnn_cell.LSTMCell
         self.optimizer = tf.train.AdamOptimizer
@@ -43,9 +41,7 @@ class EDModel(object):
         self.sliding_decoder = int(params['sliding_decoder'])
         self.layer_sizes_ed = params['layer_sizes_ed']
         self.n_dim = int(params['n_dim'])
-        self.input_keep_prob = params['input_keep_prob']
-        self.state_keep_prob = params['state_keep_prob']
-        self.output_keep_prob = params['output_keep_prob']
+        self.keep_probs = params['keep_probs']
         self.patience = params['patience']
 
         ac = params['activation']
@@ -83,9 +79,9 @@ class EDModel(object):
             cell = self.cell_type(num_units=units, activation=self.activation, name="layer_" + str(i))
 
             # Wrap cell with dropout
-            cell = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=self.input_keep_prob,
-                                                 output_keep_prob=self.output_keep_prob,
-                                                 state_keep_prob=self.state_keep_prob,
+            cell = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=self.keep_probs,
+                                                 output_keep_prob=self.keep_probs,
+                                                 state_keep_prob=self.keep_probs,
                                                  variational_recurrent=True,
                                                  input_size=self.n_dim if i == 0 else self.layer_sizes_ed[i - 1],
                                                  dtype=tf.float32)
@@ -174,9 +170,7 @@ class EDModel(object):
         self.activation = self.params['activation']
         self.optimizer = self.params['optimizer']
         self.learning_rate = self.params['learning_rate']
-        self.input_keep_prob = self.params['input_keep_prob']
-        self.output_keep_prob = self.params['output_keep_prob']
-        self.state_keep_prob = self.params['state_keep_prob']
+        self.keep_probs = self.params['keep_probs']
         cell_type = self.params['cell_type']
         if cell_type == 'lstm':
             self.cell_type = tf.nn.rnn_cell.LSTMCell

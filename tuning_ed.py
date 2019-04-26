@@ -4,79 +4,21 @@ import numpy as np
 from dataset import GgTraceDataSet, split_data
 from ed_model import EDModel
 import multiprocessing as mp
+from sklearn.model_selection import ParameterGrid, ParameterSampler
 
-sliding_encoder = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40]
-sliding_decoder = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
-layer_unit = list(range(0, 128))
-num_layer = [1, 2]
-activation = ['tanh', 'sigmoid', 'relu']
-optimizer = ['adam', 'rmsprop']
-batch_size = [8, 16, 32, 64, 128]
-cell_type = ['lstm']
-epochs = 500
-input_keep_prob = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
-output_keep_prob = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
-state_keep_prob = [0.5, 0.6, 0.7, 0.8, 0.9, 1]
-learning_rate = [0.0001, 0.001, 0.01, 0.1]
-patience = 15
-
-
-def next_config():
-    sl_e = 0
-    sl_d = 0
-    while (True):
-        sl_e = random.choice(sliding_encoder)
-        sl_d = random.choice(sliding_decoder)
-        if sl_e > sl_d:
-            break
-
-    # Layer size
-    n_layer = random.choice(num_layer)
-    layer_sizes = []
-    for i in range(n_layer):
-        if i == 0:
-            while (True):
-                units = random.choice(layer_unit)
-                if units != 0:
-                    layer_sizes.append(units)
-                    break
-        else:
-            if layer_sizes[i - 1] == layer_unit[-1]:
-                break
-
-            while (True):
-                units = random.choice(layer_unit)
-                if 0 < units <= layer_sizes[i - 1]:
-                    layer_sizes.append(units)
-                    break
-
-    # Activation
-    ac = random.choice(activation)
-    op = random.choice(optimizer)
-    inkprob = random.choice(input_keep_prob)
-    outkprob = random.choice(output_keep_prob)
-    statekprob = random.choice(state_keep_prob)
-    lr = random.choice(learning_rate)
-    bs = random.choice(batch_size)
-    ct = random.choice(cell_type)
-
-    config = {
-        'sliding_encoder': sl_e,
-        'sliding_decoder': sl_d,
-        'layer_sizes_ed': layer_sizes,
-        'activation': ac,
-        'optimizer': op,
-        'input_keep_prob': inkprob,
-        'output_keep_prob': outkprob,
-        'state_keep_prob': statekprob,
-        'batch_size': bs,
-        'learning_rate': lr,
-        'epochs': epochs,
-        'cell_type': ct,
-        'patience': patience,
-    }
-    return config
-
+dict_config = {
+    "sliding_encoder": [4, 8, 12, 16, 20, 24, 28, 32, 36, 40],
+    "sliding_decoder": [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+    "layer_sizes_ed": [[8], [16], [32], [64], [8, 4], [16, 8], [16, 4], [32, 16], [32, 4], [64, 32], [64, 16]],
+    "activation": ['tanh', 'sigmoid'],
+    "optimizer": ['adam', 'rmsprop'],
+    "batch_size": [8, 16, 32, 64],
+    "cell_type": ['lstm'],
+    "epochs": [2],
+    "keep_probs": [0.95],
+    "learning_rate": [0.0001, 0.001, 0.01],
+    "patience": [15],
+}
 
 def run(params):
     # pprint.pprint(params)
@@ -90,15 +32,13 @@ def run(params):
     x_test = (test[0], test[1])
     y_test = test[2]
 
-    model_name = "sle({})_sld({})_ls({})_ac({})_opt({})_ikp({})_okp({})_skp({})_bs({})_lr({})_ct({})".format(
+    model_name = "sle({})_sld({})_ls({})_ac({})_opt({})_kp({})_bs({})_lr({})_ct({})".format(
         params['sliding_encoder'],
         params['sliding_decoder'],
         params['layer_sizes_ed'],
         params['activation'],
         params['optimizer'],
-        params['input_keep_prob'],
-        params['output_keep_prob'],
-        params['state_keep_prob'],
+        params['keep_probs'],
         params['batch_size'],
         params['learning_rate'],
         params['cell_type']
@@ -110,7 +50,7 @@ def run(params):
     history = model.train(x_train, y_train,
                           batch_size=params['batch_size'],
                           epochs=params['epochs'], verbose=1)
-    model.save()
+    # model.save()
 
     # plot history
     # histor = pd.DataFrame(history)
@@ -122,15 +62,15 @@ def run(params):
     plt.xlabel('epoch')
     plt.ylabel('loss')
     # plt.show()
-    plt.savefig('logs/' + model_name + '/history.png')
+    plt.savefig('logs/' + model_name + '_history.png')
     plt.clf()
 
     # plot predict
     preds = model.predict(x_test)
     mae = np.mean(np.abs(y_test - preds)) * 56.863121
 
-    with open('logs/mae.txt', 'a') as f:
-        f.write("{},{:.5f}\n".format(model_name, mae))
+    with open('logs/mae.csv', 'a') as f:
+        f.write("{};{:.5f}\n".format(model_name, mae))
 
     y_test = y_test[:, -1, 0]
     preds = preds[:, -1, 0]
@@ -139,18 +79,16 @@ def run(params):
     plt.xlabel('time')
     plt.ylabel('value')
     plt.legend()
-    plt.savefig('logs/' + model_name + '/predict.png')
+    plt.savefig('logs/' + model_name + '_predict.png')
     plt.clf()
 
-    model.save()
 
-
-def mutil_running(num_configs=1, n_jobs=1):
+def mutil_running(list_configs, n_jobs=1):
     if n_jobs == -1:
         n_jobs = mp.cpu_count()
     pool = mp.Pool(n_jobs)
 
-    list_configs = [next_config() for i in range(num_configs)]
+    num_configs = len(list_configs)
     config_per_map = 64
     n_maps = num_configs // config_per_map
     if num_configs % config_per_map != 0:
@@ -166,30 +104,33 @@ def mutil_running(num_configs=1, n_jobs=1):
 
 
 test_config = {
-        'sliding_encoder': 4,
-        'sliding_decoder': 2,
-        'layer_sizes_ed': [8],
-        'activation': 'tanh',
-        'optimizer': 'adam',
-        'input_keep_prob': 0.7,
-        'output_keep_prob': 0.7,
-        'state_keep_prob': 0/7,
-        'batch_size': 32,
-        'learning_rate': 0.001,
-        'epochs': 2,
-        'cell_type': 'lstm',
+    'sliding_encoder': 30,
+    'sliding_decoder': 6,
+    'layer_sizes_ed': [64, 16],
+    'activation': 'tanh',
+    'optimizer': 'rmsprop',
+    'input_keep_prob': 0.95,
+    'output_keep_prob': 0.95,
+    'state_keep_prob': 0.95,
+    'batch_size': 2,
+    'learning_rate': 0.001,
+    'epochs': 200,
+    'cell_type': 'lstm',
+    'patience': 2
 }
 
-
 import argparse
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--test', default=False, type=bool)
 parser.add_argument('--n_jobs', default=1, type=int)
 parser.add_argument('--n_configs', default=1, type=int)
 args = parser.parse_args()
 
+list_config = np.random.choice(list(ParameterGrid(dict_config)), size=args.n_configs)
+print(len(list_config))
+
 if args.test:
     run(test_config)
 else:
-    mutil_running(num_configs=args.n_configs, n_jobs=args.n_jobs)
-
+    mutil_running(list_configs=list_config, n_jobs=args.n_jobs)
