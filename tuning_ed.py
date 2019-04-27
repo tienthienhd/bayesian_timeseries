@@ -54,15 +54,12 @@ def run(params):
     # model.save()
 
     # plot history
-    # histor = pd.DataFrame(history)
-    # print(histor.describe())
-    # history.loc[:, ['loss', 'val_loss']].plot()
     # plt.plot(history['loss'], label='loss')
     # plt.plot(history['val_loss'], label='val_loss')
     # plt.legend()
     # plt.xlabel('epoch')
     # plt.ylabel('loss')
-    # # plt.show()
+    # plt.show()
     # plt.savefig('logs/' + model_name + '_history.png')
     # plt.clf()
 
@@ -109,14 +106,14 @@ def mutil_running(list_configs, n_jobs=1):
 
 
 test_config = {
-    'sliding_encoder': 40,
-    'sliding_decoder': 6,
-    'layer_sizes_ed': [8],
+    'sliding_encoder': 16,
+    'sliding_decoder': 2,
+    'layer_sizes_ed': [16, 4],
     'activation': 'tanh',
     'optimizer': 'rmsprop',
     'keep_probs': 0.95,
-    'batch_size': 64,
-    'learning_rate': 0.01,
+    'batch_size': 16,
+    'learning_rate': 0.001,
     'epochs': 500,
     'cell_type': 'lstm',
     'patience': 15
@@ -125,7 +122,7 @@ test_config = {
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--test', default=False, type=bool)
+parser.add_argument('--test', default=False, type=bool, choices=[True, False])
 parser.add_argument('--n_jobs', default=1, type=int)
 parser.add_argument('--n_configs', default=1, type=int)
 args = parser.parse_args()

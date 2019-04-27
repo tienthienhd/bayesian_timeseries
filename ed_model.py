@@ -132,10 +132,10 @@ class EDModel(object):
             tf.add_to_collection('params', self.rmse)
 
         with tf.variable_scope('optimizer'):
-            # global_step = tf.train.get_or_create_global_step()
-            # learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, 2000, 0.96, staircase=True)
+            global_step = tf.train.get_or_create_global_step()
+            learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, 2000, 0.96, staircase=True)
 
-            self.train_op = self.optimizer(self.learning_rate).minimize(self.loss)
+            self.train_op = self.optimizer(learning_rate).minimize(self.loss, global_step=global_step)
             tf.add_to_collection('params', self.train_op)
 
         self.sess.run(tf.global_variables_initializer())
@@ -144,6 +144,9 @@ class EDModel(object):
     def save(self):
         saver = tf.train.Saver()
         saver.save(self.sess, self.model_dir+'/ed_model')
+
+        with open(self.model_dir + "/hyper_params.json", 'w') as f:
+            json.dump(self.params, f)
 
     def restore(self):
         saver = tf.train.import_meta_graph(self.model_dir + '.meta')
@@ -160,7 +163,7 @@ class EDModel(object):
         self.rmse = params[7]
         self.train_op = params[-1]
 
-        self.params = json.load(open(self.model_dir + '/params.json', 'r'))
+        self.params = json.load(open(self.model_dir + '/hyper_params.json', 'r'))
         self.params = self.params
         self.sliding_encoder = self.params['sliding_encoder']
         self.sliding_decoder = self.params['sliding_decoder']
@@ -209,11 +212,14 @@ class EDModel(object):
                 xd = xd_train[b * batch_size: (b + 1) * batch_size]
                 yd = yd_train[b * batch_size: (b + 1) * batch_size]
 
-                l, m, r, _ = self.sess.run([self.loss, self.mae, self.rmse, self.train_op], feed_dict={
-                    self.x_e: xe,
-                    self.x_d: xd,
-                    self.y_d: yd
-                })
+                try:
+                    l, m, r, _ = self.sess.run([self.loss, self.mae, self.rmse, self.train_op], feed_dict={
+                        self.x_e: xe,
+                        self.x_d: xd,
+                        self.y_d: yd
+                    })
+                except ValueError:
+                    print("============>Exception: " + xd_train.shape)
                 loss += l
                 mae += m
                 rmse += np.square(r) # mean square error
@@ -242,7 +248,7 @@ class EDModel(object):
                     "Epoch {}/{}: time={:.2f}s, loss={:.5f}, mae={:.5f}, rmse={:.5f}, val_loss={:.5f}, val_mae={:.5f}, val_rmse={:.5f}".format(
                         e + 1, epochs, epoch_time,
                         loss, mae, rmse, val_loss, val_mae, val_rmse))
-            if self._early_stop(history['val_loss'], e, patience=15):
+            if self._early_stop(history['val_loss'], e, patience=self.patience):
                 print('Early stop at epoch', (e + 1))
                 break
             if np.isnan(loss):
