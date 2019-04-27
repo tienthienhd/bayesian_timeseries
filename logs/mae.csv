@@ -1,0 +1,45 @@
+sle(12)_sld(12)_ls([8])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(64)_lr(0.001)_ct(lstm);0.67098
+sle(20)_sld(14)_ls([16, 4])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(64)_lr(0.01)_ct(lstm);0.90442
+sle(24)_sld(12)_ls([64, 32])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(32)_lr(0.01)_ct(lstm);0.94275
+sle(40)_sld(10)_ls([16, 8])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(32)_lr(0.01)_ct(lstm);2.48414
+sle(32)_sld(14)_ls([32, 16])_ac(tanh)_opt(adam)_kp(0.95)_bs(64)_lr(0.0001)_ct(lstm);0.60644
+sle(28)_sld(18)_ls([32, 16])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(16)_lr(0.01)_ct(lstm);1.86007
+sle(40)_sld(6)_ls([8])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(64)_lr(0.01)_ct(lstm);0.30411
+sle(24)_sld(4)_ls([16])_ac(tanh)_opt(adam)_kp(0.95)_bs(32)_lr(0.001)_ct(lstm);0.71436
+sle(28)_sld(20)_ls([8, 4])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(32)_lr(0.001)_ct(lstm);1.22069
+sle(12)_sld(10)_ls([64, 16])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(16)_lr(0.001)_ct(lstm);0.99571
+sle(28)_sld(8)_ls([64, 32])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(64)_lr(0.001)_ct(lstm);0.39882
+sle(24)_sld(12)_ls([32])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(16)_lr(0.01)_ct(lstm);1.80906
+sle(20)_sld(18)_ls([32, 4])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(32)_lr(0.0001)_ct(lstm);0.55436
+sle(36)_sld(8)_ls([64])_ac(tanh)_opt(adam)_kp(0.95)_bs(8)_lr(0.0001)_ct(lstm);0.62318
+sle(32)_sld(14)_ls([16, 4])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(8)_lr(0.001)_ct(lstm);0.87898
+sle(24)_sld(12)_ls([64, 32])_ac(tanh)_opt(adam)_kp(0.95)_bs(16)_lr(0.001)_ct(lstm);1.37731
+sle(32)_sld(8)_ls([8])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(64)_lr(0.01)_ct(lstm);0.31093
+sle(16)_sld(16)_ls([16])_ac(tanh)_opt(adam)_kp(0.95)_bs(32)_lr(0.01)_ct(lstm);1.83694
+sle(4)_sld(2)_ls([32, 16])_ac(tanh)_opt(adam)_kp(0.95)_bs(16)_lr(0.0001)_ct(lstm);0.79627
+sle(36)_sld(12)_ls([16, 4])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(32)_lr(0.001)_ct(lstm);0.69499
+sle(32)_sld(16)_ls([64, 16])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(64)_lr(0.01)_ct(lstm);0.34098
+sle(20)_sld(4)_ls([32, 4])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(32)_lr(0.0001)_ct(lstm);0.31498
+sle(8)_sld(8)_ls([8, 4])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(32)_lr(0.001)_ct(lstm);0.70206
+sle(20)_sld(10)_ls([32, 16])_ac(tanh)_opt(adam)_kp(0.95)_bs(16)_lr(0.001)_ct(lstm);1.21008
+sle(40)_sld(6)_ls([16, 4])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(64)_lr(0.0001)_ct(lstm);0.62806
+sle(32)_sld(6)_ls([32, 16])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(32)_lr(0.001)_ct(lstm);0.73247
+sle(20)_sld(16)_ls([8])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(32)_lr(0.001)_ct(lstm);0.69253
+sle(20)_sld(10)_ls([32, 4])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(64)_lr(0.0001)_ct(lstm);0.48239
+sle(20)_sld(20)_ls([64])_ac(tanh)_opt(adam)_kp(0.95)_bs(8)_lr(0.001)_ct(lstm);1.20168
+sle(16)_sld(14)_ls([32, 16])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(64)_lr(0.0001)_ct(lstm);12.64825
+sle(16)_sld(14)_ls([32, 16])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(64)_lr(0.001)_ct(lstm);0.79534
+sle(40)_sld(20)_ls([64, 16])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(16)_lr(0.0001)_ct(lstm);1.21024
+sle(12)_sld(4)_ls([64])_ac(tanh)_opt(adam)_kp(0.95)_bs(64)_lr(0.001)_ct(lstm);0.43066
+sle(8)_sld(6)_ls([16])_ac(tanh)_opt(adam)_kp(0.95)_bs(16)_lr(0.001)_ct(lstm);0.96450
+sle(28)_sld(12)_ls([8])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(64)_lr(0.01)_ct(lstm);0.72526
+sle(20)_sld(2)_ls([16, 8])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(8)_lr(0.01)_ct(lstm);0.33481
+sle(16)_sld(14)_ls([32])_ac(sigmoid)_opt(rmsprop)_kp(0.95)_bs(32)_lr(0.001)_ct(lstm);0.99562
+sle(20)_sld(18)_ls([64])_ac(tanh)_opt(adam)_kp(0.95)_bs(32)_lr(0.001)_ct(lstm);0.45190
+sle(36)_sld(20)_ls([32])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(8)_lr(0.01)_ct(lstm);0.41614
+sle(16)_sld(10)_ls([64, 32])_ac(tanh)_opt(adam)_kp(0.95)_bs(16)_lr(0.0001)_ct(lstm);0.91619
+sle(20)_sld(10)_ls([32, 16])_ac(tanh)_opt(adam)_kp(0.95)_bs(16)_lr(0.0001)_ct(lstm);0.58405
+sle(28)_sld(20)_ls([64, 32])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(8)_lr(0.001)_ct(lstm);1.37668
+sle(16)_sld(16)_ls([8, 4])_ac(sigmoid)_opt(adam)_kp(0.95)_bs(64)_lr(0.0001)_ct(lstm);1.66960
+sle(36)_sld(6)_ls([16, 8])_ac(tanh)_opt(rmsprop)_kp(0.95)_bs(8)_lr(0.01)_ct(lstm);0.42763
+sle(16)_sld(16)_ls([32, 4])_ac(tanh)_opt(adam)_kp(0.95)_bs(8)_lr(0.001)_ct(lstm);1.50607
