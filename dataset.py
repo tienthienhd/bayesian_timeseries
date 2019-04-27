@@ -96,7 +96,6 @@ class GgTraceDataSet(object):
         plt.show()
 
     def invert_transform(self, x, main_features=True):
-        x = np.asarray(x)
         if main_features:
             min_feature = self.min_max_scaler.data_min_[0]
             max_feature = self.min_max_scaler.data_max_[0]

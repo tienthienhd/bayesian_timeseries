@@ -32,7 +32,7 @@ def run(params):
     x_test = (test[0], test[1])
     y_test = test[2]
 
-    model_name = "sle({})_sld({})_ls({})_ac({})_opt({})_kp({})_bs({})_lr({})_ct({})".format(
+    model_name = "sle({})_sld({})_ls({})_ac({})_opt({})_kp({})_bs({})_lr({})_ct({})_pat({})".format(
         params['sliding_encoder'],
         params['sliding_decoder'],
         params['layer_sizes_ed'],
@@ -41,7 +41,8 @@ def run(params):
         params['keep_probs'],
         params['batch_size'],
         params['learning_rate'],
-        params['cell_type']
+        params['cell_type'],
+        params['patience']
     )
     print('Running config: ' + model_name)
 
@@ -56,30 +57,33 @@ def run(params):
     # histor = pd.DataFrame(history)
     # print(histor.describe())
     # history.loc[:, ['loss', 'val_loss']].plot()
-    plt.plot(history['loss'], label='loss')
-    plt.plot(history['val_loss'], label='val_loss')
-    plt.legend()
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    # plt.show()
-    plt.savefig('logs/' + model_name + '_history.png')
-    plt.clf()
+    # plt.plot(history['loss'], label='loss')
+    # plt.plot(history['val_loss'], label='val_loss')
+    # plt.legend()
+    # plt.xlabel('epoch')
+    # plt.ylabel('loss')
+    # # plt.show()
+    # plt.savefig('logs/' + model_name + '_history.png')
+    # plt.clf()
 
     # plot predict
     preds = model.predict(x_test)
-    mae = np.mean(np.abs(y_test - preds)) * 56.863121
+    preds_inv = dataset.invert_transform(preds)
+    y_test_inv = dataset.invert_transform(y_test)
 
+    mae = np.mean(np.abs(np.subtract(preds_inv, y_test_inv)))
     with open('logs/mae.csv', 'a') as f:
         f.write("{};{:.5f}\n".format(model_name, mae))
 
-    y_test = y_test[:, -1, 0]
-    preds = preds[:, -1, 0]
-    plt.plot(y_test, label='actual')
-    plt.plot(preds, label='predict')
+    y_test_inv = y_test_inv[:, -1, 0]
+    preds_inv = preds_inv[:, -1, 0]
+    plt.plot(y_test_inv, label='actual', color='#fc6b00', linestyle='solid')
+    plt.plot(preds_inv, label='predict', color='blue', linestyle='solid')
     plt.xlabel('time')
     plt.ylabel('value')
     plt.legend()
-    plt.title('mae=' + str(mae))
+    plt.title('mae={:.2f}'.format(mae))
+    # plt.show()
     plt.savefig('logs/' + model_name + '_predict.png')
     plt.clf()
 
@@ -105,17 +109,17 @@ def mutil_running(list_configs, n_jobs=1):
 
 
 test_config = {
-    'sliding_encoder': 12,
-    'sliding_decoder': 4,
-    'layer_sizes_ed': [64, 16],
+    'sliding_encoder': 40,
+    'sliding_decoder': 6,
+    'layer_sizes_ed': [8],
     'activation': 'tanh',
     'optimizer': 'rmsprop',
     'keep_probs': 0.95,
-    'batch_size': 8,
-    'learning_rate': 0.001,
-    'epochs': 20,
+    'batch_size': 64,
+    'learning_rate': 0.01,
+    'epochs': 500,
     'cell_type': 'lstm',
-    'patience': 2
+    'patience': 15
 }
 
 import argparse
@@ -133,3 +137,5 @@ if args.test:
     run(test_config)
 else:
     mutil_running(list_configs=list_config, n_jobs=args.n_jobs)
+
+
