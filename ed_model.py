@@ -219,7 +219,8 @@ class EDModel(object):
                         self.y_d: yd
                     })
                 except ValueError:
-                    print("============>Exception: " + xd_train.shape)
+                    print("============>Exception: {}".format(xd_train.shape))
+                    print(self.params)
                 loss += l
                 mae += m
                 rmse += np.square(r) # mean square error
