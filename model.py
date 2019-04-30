@@ -253,6 +253,7 @@ class Model(object):
                     mae += m
                 except ValueError as e:
                     print('==========> Exception: {}'.format(str(self.params)))
+                    print('________{}'.format(xd.shape))
                     print(e)
                     break
             loss /= n_batches
@@ -260,14 +261,21 @@ class Model(object):
             history['loss'].append(loss)
             history['mae'].append(mae)
 
-            val_loss, val_mae = self.sess.run([self.loss_ed, self.mae_ed],
-                                              {
-                                                  self.xe: xe_val,
-                                                  self.xd: xd_val,
-                                                  self.yd: yd_val
-                                              })
-            history['val_loss'].append(val_loss)
-            history['val_mae'].append(val_mae)
+            try:
+                val_loss, val_mae = self.sess.run([self.loss_ed, self.mae_ed],
+                                                  {
+                                                      self.xe: xe_val,
+                                                      self.xd: xd_val,
+                                                      self.yd: yd_val
+                                                  })
+                history['val_loss'].append(val_loss)
+                history['val_mae'].append(val_mae)
+            except ValueError as e:
+                print('==========> Exception: {}'.format(str(self.params)))
+                print('________{}'.format(xd_val.shape))
+                print(e)
+                break
+
             epoch_time = time.time() - start_epoch_time
             if verbose > 0:
                 print(
