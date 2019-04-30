@@ -245,10 +245,16 @@ class Model(object):
                     self.yd: yd
                 }
                 output_feed = [self.loss_ed, self.mae_ed, self.train_op_ed]
-                l, m, _ = self.sess.run(output_feed, input_feed)
 
-                loss += l
-                mae += m
+                try:
+                    l, m, _ = self.sess.run(output_feed, input_feed)
+
+                    loss += l
+                    mae += m
+                except ValueError as e:
+                    print('==========> Exception: {}'.format(str(self.params)))
+                    print(e)
+                    break
             loss /= n_batches
             mae /= n_batches
             history['loss'].append(loss)
