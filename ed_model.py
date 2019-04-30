@@ -37,6 +37,7 @@ class EDModel(object):
         self.sess = tf.Session()
 
     def _parse_params(self, params):
+        self.params = params
         self.sliding_encoder = int(params['sliding_encoder'])
         self.sliding_decoder = int(params['sliding_decoder'])
         self.layer_sizes_ed = params['layer_sizes_ed']
@@ -101,7 +102,7 @@ class EDModel(object):
         # Placeholder input
         self.x_e = tf.placeholder(tf.float32, (None, self.sliding_encoder, self.n_dim), 'x_e')
         self.x_d = tf.placeholder(tf.float32, (None, self.sliding_decoder, self.n_dim), 'x_d')
-        self.y_d = tf.placeholder(tf.float32, (None, self.sliding_decoder, self.n_dim), 'y_d')
+        self.y_d = tf.placeholder(tf.float32, (None, self.sliding_decoder, 1), 'y_d')
 
         # add to collection
         tf.add_to_collection('params', self.x_e)
@@ -149,8 +150,8 @@ class EDModel(object):
             json.dump(self.params, f)
 
     def restore(self):
-        saver = tf.train.import_meta_graph(self.model_dir + '.meta')
-        saver.restore(self.sess, self.model_dir)
+        saver = tf.train.import_meta_graph(self.model_dir + '/ed_model.meta')
+        saver.restore(self.sess, self.model_dir + '/ed_model')
 
         params = tf.get_collection('params')
         self.x_e = params[0]
@@ -218,12 +219,14 @@ class EDModel(object):
                         self.x_d: xd,
                         self.y_d: yd
                     })
-                except ValueError:
+                    loss += l
+                    mae += m
+                    rmse += np.square(r) # mean square error
+                except ValueError as e:
                     print("============>Exception: {}".format(xd_train.shape))
-                    print(self.params)
-                loss += l
-                mae += m
-                rmse += np.square(r) # mean square error
+                    # print(self.params)
+                    print(e)
+
             loss /= n_batches
             mae /= n_batches
             rmse /= n_batches # mean square error
@@ -296,30 +299,30 @@ class EDModel(object):
         })
 
 
-# from dataset import GgTraceDataSet, split_data
+# from dataset import GgTraceDataSet2, split_data
 #
 # params_example = {
-#     'sliding_encoder': 4,
-#     'sliding_decoder': 2,
-#     'layer_sizes_ed': [32],
+#     'sliding_encoder': 8,
+#     'sliding_decoder': 1,
+#     'layer_sizes_ed': [64],
 #     # 'layer_sizes_ann': [32, 4],
 #     'activation': 'tanh',
 #     'optimizer': 'adam',
 #     # 'n_dim': 1,
-#     'input_keep_prob': 0.5,
-#     'output_keep_prob': 0.5,
-#     'state_keep_prob': 0.5,
-#     'batch_size': 1,
+#     'keep_probs': 0.95,
+#     'batch_size': 4,
 #     'learning_rate': 0.001,
 #     'epochs': 100,
 #     'cell_type': 'lstm',
+#     'patience': 3,
 # }
-#
-# dataset = GgTraceDataSet('datasets/5.csv',
+
+# dataset = GgTraceDataSet2('datasets/5.csv',
 #                          params_example['sliding_encoder'],
 #                          params_example['sliding_decoder'])
 # params_example['n_dim'] = dataset.n_dim
-# data = dataset.get_data()
+# data = dataset.get_data_ed()
+# print(data[0].shape, data[1].shape, data[2].shape)
 # train, test = split_data(data)
 #
 # model = EDModel('logs/test')
@@ -327,15 +330,16 @@ class EDModel(object):
 # history = model.train([train[0], train[1]], train[2],
 #             batch_size=params_example['batch_size'],
 #             epochs=params_example['epochs'])
-#
+# model.save()
+# model.restore()
 # from utils import plot_history, plot_predicts
-#
+
 # plot_history((history['loss'], history['val_loss']), ('loss', 'val_loss'))
-#
+
 # print(model.eval([test[0], test[1]], test[2]))
-#
+
 # print(model.get_features(test[0])[0, :2, :2])
 # print(model.get_features(test[0])[0, :2, :2])
-#
+
 # preds = model.predict(x=[test[0], test[1]])
 # plot_predicts(actual=test[2], predict=preds)

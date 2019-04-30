@@ -1,21 +1,22 @@
-import random
 import matplotlib.pyplot as plt
 import numpy as np
-from dataset import GgTraceDataSet, split_data
-from ed_model import EDModel
+from dataset import GgTraceDataSet2, split_data
+from model import Model
 import multiprocessing as mp
-from sklearn.model_selection import ParameterGrid, ParameterSampler
+from sklearn.model_selection import ParameterGrid
 
 dict_config = {
     "sliding_encoder": [4, 8, 12, 16, 20, 24, 28, 32, 36, 40],
     "sliding_decoder": [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
     "layer_sizes_ed": [[8], [16], [32], [64], [8, 4], [16, 8], [16, 4], [32, 16], [32, 4], [64, 32], [64, 16]],
+    "layer_sizes_f": [[4], [8], [16], [32], [64], [8, 4], [16, 8], [16, 4], [32, 16], [32, 8], [64, 32], [64, 16], [64, 8]],
     "activation": ['tanh', 'sigmoid'],
     "optimizer": ['adam', 'rmsprop'],
     "batch_size": [8, 16, 32, 64],
     "cell_type": ['lstm'],
     "epochs": [500],
     "keep_probs": [0.95],
+    "dropout": [0.05],
     "learning_rate": [0.0001, 0.001, 0.01],
     "patience": [15],
 }
@@ -23,22 +24,24 @@ dict_config = {
 def run(params):
     # pprint.pprint(params)
 
-    dataset = GgTraceDataSet('datasets/5.csv', params['sliding_encoder'], params['sliding_decoder'])
+    dataset = GgTraceDataSet2('datasets/5.csv', params['sliding_encoder'], params['sliding_decoder'])
     params['n_dim'] = dataset.n_dim
-    data = dataset.get_data()
+    data = dataset.get_data_ed()
     train, test = split_data(data, test_size=0.2)
     x_train = (train[0], train[1])
     y_train = train[2]
     x_test = (test[0], test[1])
     y_test = test[2]
 
-    model_name = "sle({})_sld({})_ls({})_ac({})_opt({})_kp({})_bs({})_lr({})_ct({})_pat({})".format(
+    model_name = "sle({})_sld({})_lsed({})_lsf({})_ac({})_opt({})_kp({})_drop({})_bs({})_lr({})_ct({})_pat({})".format(
         params['sliding_encoder'],
         params['sliding_decoder'],
         params['layer_sizes_ed'],
+        params['layer_sizes_f'],
         params['activation'],
         params['optimizer'],
         params['keep_probs'],
+        params['dropout'],
         params['batch_size'],
         params['learning_rate'],
         params['cell_type'],
@@ -46,12 +49,12 @@ def run(params):
     )
     print('Running config: ' + model_name)
 
-    model = EDModel('logs/' + model_name)
+    model = Model('logs/' + model_name)
     model.build_model(params)
     history = model.train(x_train, y_train,
                           batch_size=params['batch_size'],
-                          epochs=params['epochs'], verbose=1)
-    model.save()
+                          epochs=params['epochs'], verbose=1, model='ed')
+    # model.save()
 
     # plot history
     # plt.plot(history['loss'], label='loss')
@@ -64,7 +67,7 @@ def run(params):
     # plt.clf()
 
     # plot predict
-    preds = model.predict(x_test)
+    preds = model.predict(x_test, model='ed')
     preds_inv = dataset.invert_transform(preds)
     y_test_inv = dataset.invert_transform(y_test)
 
@@ -109,9 +112,11 @@ test_config = {
     'sliding_encoder': 16,
     'sliding_decoder': 2,
     'layer_sizes_ed': [16, 4],
+    'layer_sizes_f': [16],
     'activation': 'tanh',
     'optimizer': 'rmsprop',
     'keep_probs': 0.95,
+    'dropout': 0.05,
     'batch_size': 8,
     'learning_rate': 0.001,
     'epochs': 500,

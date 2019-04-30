@@ -60,10 +60,10 @@ def plot_predicts(actual, predict):
     assert np.ndim(actual) == np.ndim(predict)
     ndim = np.ndim(actual)
     if ndim == 3:
-        actual = actual[:, -1, -1]
+        actual = actual[:, 0, -1]
         predict = predict[:, -1, -1]
     elif ndim == 2:
-        actual = actual[:, -1]
+        actual = actual[:, 0]
         predict = predict[:, -1]
 
     plt.plot(actual, label='actual')

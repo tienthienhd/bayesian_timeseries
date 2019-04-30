@@ -15,10 +15,12 @@ class AnnModel(object):
         self.ed_model = EDModel(model_ed_dir)
         self.ed_model.restore()
         self.sliding = self.ed_model.sliding_encoder
+        self.n_dim = self.ed_model.layer_sizes_ed[-1]
 
         self.sess = tf.Session()
 
     def _parse_params(self, params):
+        params['n_dim'] = self.n_dim
         self.params = params
         self.layer_sizes_ann = params['layer_sizes_ann']
         self.dropout = params['dropout']
@@ -48,7 +50,7 @@ class AnnModel(object):
         self._parse_params(params)
 
         # Define input
-        self.x = tf.placeholder(tf.float32, (None, 1000000), 'x')
+        self.x = tf.placeholder(tf.float32, (None, self.sliding, self.n_dim), 'x')
         self.y = tf.placeholder(tf.float32, (None, 1), 'y')
 
         # Define architecture
@@ -57,8 +59,11 @@ class AnnModel(object):
             for i, units in enumerate(self.layer_sizes_ann):
                 net = tf.layers.dense(net, units=units, activation=self.activation, name='layer_'+str(i))
                 net = tf.layers.dropout(net, rate=self.dropout, name='dropout_l'+str(i))
-            output = tf.layers.dense(net, units=1)
+            net = tf.layers.dense(net, units=1, activation=self.activation) # combine data dimension
+            net = tf.reshape(net, (-1, self.sliding))
+            output = tf.layers.dense(net, units=1) # predict next value
             self.preds = tf.identity(output, 'predict')
+
 
         # Define loss
         with tf.variable_scope('loss_and_metrics'):
@@ -89,8 +94,8 @@ class AnnModel(object):
             json.dump(self.params, f)
 
     def restore(self):
-        saver = tf.train.import_meta_graph(self.model_dir + '.meta')
-        saver.restore(self.sess, self.model_dir)
+        saver = tf.train.import_meta_graph(self.model_dir + '/ann_model.meta')
+        saver.restore(self.sess, self.model_dir+'/ann_model')
 
         params = tf.get_collection('params')
         self.x = params[0]
@@ -102,9 +107,7 @@ class AnnModel(object):
         self.train_op = params[-1]
 
         self.params = json.load(open(self.model_dir + '/hyper_params.json', 'r'))
-        self.params = self.params
         self.layer_sizes_ann = self.params['layer_sizes_ann']
-        self.n_dim = self.params['n_dim']
         self.activation = self.params['activation']
         self.optimizer = self.params['optimizer']
         self.learning_rate = self.params['learning_rate']
@@ -112,11 +115,12 @@ class AnnModel(object):
 
     def _compute_features(self, x):
         features = self.ed_model.get_features(x)
-        features = np.mean(features, axis=2)
+        # features = np.mean(features, axis=2)
         # print('features shape:', features.shape)
         return features
 
     def train(self, x, y, validation_split=0.2, batch_size=32, epochs=1, verbose=1):
+        x = self._compute_features(x)
         n_train = int(len(y) * (1 - validation_split))
         x_train = x[:n_train]
         y_train = y[:n_train]
@@ -184,75 +188,81 @@ class AnnModel(object):
                 break
         return history
 
+    @staticmethod
+    def _early_stop(array, idx, patience=1, min_delta=0.0):
+        if idx <= patience:
+            return False
+
+        value = array[idx - patience]
+        arr = array[idx - patience + 1:]
+        check = 0
+        for val in arr:
+            if val - value > min_delta:
+                check += 1
+        if check == patience:
+            return True
+        else:
+            return False
+
     def eval(self, x, y):
         features = self._compute_features(x)
-        return self.model.evaluate(features, y)
+        return self.sess.run([self.loss, self.mae, self.rmse], {self.x: features, self.y: y})
 
     def predict(self, x):
         features = self._compute_features(x)
-        return self.model.predict(features)
-
-    def save(self):
-        self.model.save(self.model_dir + '/ann_model.h5')
-        json.dump(self.params, open(self.model_dir+'/params.json', 'w'))
-
-    def restore(self):
-        print("Loading model....")
-        self.model = load_model(self.model_dir + '/ann_model.h5')
-        self.params = json.load(open(self.model_dir + '/params.json', 'r'))
-        self.layer_sizes_ann = self.params['layer_sizes_ann']
-        self.n_dim = self.params['n_dim']
-        self.activation = self.params['activation']
-        self.optimizer = self.params['optimizer']
-        self.learning_rate = self.params['learning_rate']
-        self.dropout = self.params['dropout']
+        return self.sess.run(self.preds, {self.x: features})
 
 
-#
-from dataset import GgTraceDataSet, split_data
+
+
+from dataset import GgTraceDataSet2, split_data
 
 
 params = {
-    'layer_sizes_ann': [32, 4],
-    'activation': 'tanh',
+    'layer_sizes_ann': [64],
+    'activation': 'sigmoid',
     'optimizer': 'rmsprop',
-    'dropout': 0.5,
-    'batch_size': 32,
-    'learning_rate': 0.01,
+    'dropout': 0.05,
+    'batch_size': 8,
+    'learning_rate': 0.001,
     'epochs': 200,
-    'patience': 15,
+    'patience': 5,
 }
 
-# dataset = GgTraceDataSet('datasets/5.csv', params['sliding_encoder'], params['sliding_decoder'])
-# params['n_dim'] = dataset.n_dim
-# data = dataset.get_data()
-# train, test = split_data(data, test_size=0.2)
-# x_train = train[0]
-# y_train = train[3][:, 0].reshape((-1, 1))
-# x_test = test[0]
-# y_test = test[3][:, 0].reshape((-1, 1))
-#
-# print(y_train.shape)
+dataset = GgTraceDataSet2('datasets/5.csv', 8, 1)
+params['n_dim'] = dataset.n_dim
+data = dataset.get_data_forecast()
+train, test = split_data(data, test_size=0.2)
+x_train = train[0]
+y_train = train[1].reshape((-1, 1))
+x_test = test[0]
+y_test = test[1].reshape((-1, 1))
 
-model = AnnModel('logs/test_ann', 'logs/test2')
+print(x_train.shape, y_train.shape)
+
+model = AnnModel('logs/test_ann', 'logs/test')
 model.build_model(params)
-# model.train(x_train, y_train,
-#             batch_size=params['batch_size'],
-#             epochs=params['epochs'],
-#             verbose=1)
+model.train(x_train, y_train,
+            batch_size=params['batch_size'],
+            epochs=params['epochs'],
+            verbose=1)
 
-# model.save()
+model.save()
 # model.restore()
-# print(model.params)
-# print(model.eval(x_test, y_test))
-# print(model.eval(x_test, y_test))
-# preds = model.predict(x_test)
-#
-#
-# import matplotlib.pyplot as plt
-#
-# plt.plot(y_test)
-# plt.plot(preds)
-# plt.legend(['actual', 'predict'])
-#
-# plt.show()
+print(model.params)
+print(model.eval(x_test, y_test))
+print(model.eval(x_test, y_test))
+print(model.eval(x_test, y_test))
+print(model.eval(x_test, y_test))
+print(model.eval(x_test, y_test))
+print(model.eval(x_test, y_test))
+preds = model.predict(x_test)
+
+
+import matplotlib.pyplot as plt
+
+plt.plot(y_test)
+plt.plot(preds)
+plt.legend(['actual', 'predict'])
+
+plt.show()

@@ -108,3 +108,87 @@ class GgTraceDataSet(object):
 # b = a.get_data(main_features=True)
 # c = split_data(b, test_size=0.6)
 # print(len(c[0][0]))
+
+
+class GgTraceDataSet2(object):
+    def __init__(self, file_path, sle, sld=1):
+        self.file_path = file_path
+        self.sle = sle
+        self.sld = sld
+
+        data_std = self.read_data()
+        self.n_examples, self.n_dim = data_std.shape
+
+        self.min_max_scaler = MinMaxScaler()
+        self.data_scaled = self.min_max_scaler.fit_transform(data_std)
+        # df = pd.DataFrame(self.data_scaled, columns=['meanCPUUsage', 'canonical_memory_usage', 'AssignMem', 'unmapped_cache_usage', 'page_cache_usage', 'max_mem_usage', "max_cpu_usage"])
+        # df.plot()
+        # plt.show()
+
+        data_supervised = series_to_supervised(self.data_scaled, sle, sld).values
+        data_supervised = data_supervised.reshape((-1, sle + sld, self.n_dim))
+        self.n_examples = data_supervised.shape[0]
+        self.data = data_supervised
+
+
+    def read_data(self):
+        full_features = ["time_stamp", "numberOfTaskIndex", "numberOfMachineId",
+                         "meanCPUUsage", "canonical_memory_usage", "AssignMem",
+                         "unmapped_cache_usage", "page_cache_usage", "max_mem_usage",
+                         "mean_diskIO_time", "mean_local_disk_space", "max_cpu_usage",
+                         "max_disk_io_time", "cpi", "mai", "sampling_portion",
+                         "agg_type", "sampled_cpu_usage"]
+        usecols = ['meanCPUUsage', 'canonical_memory_usage', 'AssignMem', 'unmapped_cache_usage', 'page_cache_usage',
+                   'max_mem_usage', "max_cpu_usage"]
+        df = pd.read_csv(self.file_path, header=None, usecols=usecols, names=full_features)
+        # df.plot()
+        # plt.show()
+        return df
+
+    def invert_transform(self, x, main_features=True):
+        if main_features:
+            min_feature = self.min_max_scaler.data_min_[0]
+            max_feature = self.min_max_scaler.data_max_[0]
+            return x * (max_feature - min_feature) + min_feature
+
+        else:
+            return self.min_max_scaler.inverse_transform(x)
+
+    def get_data_ed(self, main_feature=True):
+        start_dec = self.sle - self.sld
+        in_e = self.data[:, :self.sle]
+        in_d = self.data[:, start_dec:self.sle]
+        if main_feature:
+            out_d = self.data[:, self.sle:, 0].reshape((-1, self.sld, 1))
+        else:
+            out_d = self.data[:, self.sle:]
+
+        return in_e, in_d, out_d
+
+    def get_data_forecast(self):
+        in_e = self.data[:, :self.sle]
+        out = self.data[:, self.sle, 0].reshape((-1, 1))
+        return in_e, out
+
+
+
+
+
+
+
+
+
+
+
+# a = GgTraceDataSet2('datasets/5.csv', 4, 2)
+# a.get_data_ed(main_feature=False)
+# a.get_data_forcast()
+
+# from tensorflow.python import keras
+#
+# model = keras.models.Sequential()
+# model.add(keras.layers.Dense(units=5, activation='sigmoid', input_shape=(1,)))
+# model.add(keras.layers.Lambda(lambda x: -x))
+#
+# pred = model.predict([[2], [2], [1], [100]])
+# print(pred)
