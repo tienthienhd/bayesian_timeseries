@@ -1,0 +1,1 @@
+{"activation": "sigmoid", "batch_size": 16, "cell_type": "lstm", "epochs": 500, "keep_probs": 0.95, "layer_sizes_ed": [32, 4], "learning_rate": 0.01, "optimizer": "rmsprop", "patience": 15, "sliding_decoder": 2, "sliding_encoder": 20, "n_dim": 1}
