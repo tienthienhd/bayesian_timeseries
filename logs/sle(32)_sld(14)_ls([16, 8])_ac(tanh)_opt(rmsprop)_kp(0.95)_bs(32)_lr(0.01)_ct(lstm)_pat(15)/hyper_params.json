@@ -1,1 +1,0 @@
-{"activation": "tanh", "batch_size": 32, "cell_type": "lstm", "epochs": 500, "keep_probs": 0.95, "layer_sizes_ed": [16, 8], "learning_rate": 0.01, "optimizer": "rmsprop", "patience": 15, "sliding_decoder": 14, "sliding_encoder": 32, "n_dim": 1}

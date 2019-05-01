@@ -6,8 +6,8 @@ import multiprocessing as mp
 from sklearn.model_selection import ParameterGrid
 
 dict_config = {
-    "sliding_encoder": [4, 8, 12, 16, 20, 24, 28, 32, 36, 40],
-    "sliding_decoder": [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+    "sliding_encoder": [8, 12, 16, 20, 24, 28, 32, 36, 40],
+    "sliding_decoder": [1, 2, 3, 4, 5, 6, 7],
     "layer_sizes_ed": [[8], [16], [32], [64], [8, 4], [16, 8], [16, 4], [32, 16], [32, 4], [64, 32], [64, 16]],
     "layer_sizes_f": [[4], [8], [16], [32], [64], [8, 4], [16, 8], [16, 4], [32, 16], [32, 8], [64, 32], [64, 16], [64, 8]],
     "activation": ['tanh', 'sigmoid'],
