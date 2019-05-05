@@ -6,7 +6,6 @@ import json
 import utils
 
 
-
 class Model(object):
     def __init__(self, model_dir):
         self.model_dir = model_dir
@@ -64,6 +63,7 @@ class Model(object):
         # forecaster
         with tf.variable_scope('forecaster'):
             out_e = tf.stop_gradient(out_e, 'features')
+            print(out_e)
             out_f = self._create_block_dense(out_e)
             self.pred_f = tf.layers.dense(out_f, units=1)
 
@@ -350,3 +350,23 @@ class Model(object):
             if np.isnan(loss):
                 break
         return history
+
+
+params = {
+    'sliding_encoder': 24,
+    'sliding_decoder': 1,
+    'layer_sizes_ed': [64],
+    'layer_sizes_f': [64, 16],
+    'activation': 'tanh',
+    'optimizer': 'rmsprop',
+    'keep_probs': 0.95,
+    'dropout': 0.05,
+    'batch_size': 32,
+    'learning_rate': 0.01,
+    'epochs': 500,
+    'cell_type': 'lstm',
+    'patience': 15
+}
+
+a = Model()
+a.build_model(params)

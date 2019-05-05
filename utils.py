@@ -56,33 +56,32 @@ def transform_cell_type(cell_type):
         raise Exception("Don't exists cell type:" + cell_type)
 
 
-def plot_predicts(actual, predict):
-    assert np.ndim(actual) == np.ndim(predict)
-    ndim = np.ndim(actual)
-    if ndim == 3:
-        actual = actual[:, 0, -1]
-        predict = predict[:, -1, -1]
-    elif ndim == 2:
-        actual = actual[:, 0]
-        predict = predict[:, -1]
-
+def plot_predicts(actual, predict, filename=None):
     plt.plot(actual, label='actual')
     plt.plot(predict, label='predict')
     plt.legend()
     plt.xlabel('time')
     plt.ylabel('value')
     plt.title('Predict')
-    plt.show()
+    if filename is None:
+        plt.show()
+    else:
+        plt.savefig(filename)
+    plt.clf()
 
 
-def plot_history(lines, labels):
+def plot_history(lines, labels, filename=None):
     assert len(lines) == len(labels)
     for key, value in zip(labels, lines):
         plt.plot(value, label=key)
 
     plt.legend()
-    plt.show()
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.title('History')
+    if filename is None:
+        plt.show()
+    else:
+        plt.savefig(filename)
+    plt.clf()
 
-# a = np.array([1, 2, 3, 4, 5])
-# b = np.array([2, 3, 4, 5, 6])
-# plot_history({'a':a, 'b':b})
