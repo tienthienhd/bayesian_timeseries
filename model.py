@@ -131,7 +131,6 @@ class Model(object):
         self.train_op_ed = params[12]
         self.train_op_f = params[13]
 
-
     def train(self, x, y, validation_split=0.2, batch_size=32, epochs=1, verbose=1, model='ed'):
 
         if model == 'ed':

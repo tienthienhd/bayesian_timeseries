@@ -22,16 +22,26 @@ dict_config = {
 }
 
 def run(params):
+    model_type = 'f'
     # pprint.pprint(params)
 
     dataset = GgTraceDataSet2('datasets/5.csv', params['sliding_encoder'], params['sliding_decoder'])
     params['n_dim'] = dataset.n_dim
-    data = dataset.get_data_ed()
-    train, test = split_data(data, test_size=0.2)
-    x_train = (train[0], train[1])
-    y_train = train[2]
-    x_test = (test[0], test[1])
-    y_test = test[2]
+    if model_type == 'ed':
+        data = dataset.get_data_ed()
+        train, test = split_data(data, test_size=0.2)
+        x_train = (train[0], train[1])
+        y_train = train[2]
+        x_test = (test[0], test[1])
+        y_test = test[2]
+    elif model_type == 'f':
+        data = dataset.get_data_forecast()
+        train, test = split_data(data, test_size=0.2)
+        x_train = train[0]
+        y_train = train[1]
+        x_test = test[0]
+        y_test = test[1]
+
 
     model_name = "sle({})_sld({})_lsed({})_lsf({})_ac({})_opt({})_kp({})_drop({})_bs({})_lr({})_ct({})_pat({})".format(
         params['sliding_encoder'],
@@ -51,9 +61,10 @@ def run(params):
 
     model = Model('logs/' + model_name)
     model.build_model(params)
+    # model.restore()
     history = model.train(x_train, y_train,
                           batch_size=params['batch_size'],
-                          epochs=params['epochs'], verbose=1, model='ed')
+                          epochs=params['epochs'], verbose=1, model=model_type)
     # model.save()
 
     # plot history
@@ -67,7 +78,7 @@ def run(params):
     # plt.clf()
 
     # plot predict
-    preds = model.predict(x_test, model='ed')
+    preds = model.predict(x_test, model=model_type)
     preds_inv = dataset.invert_transform(preds)
     y_test_inv = dataset.invert_transform(y_test)
 
@@ -75,16 +86,22 @@ def run(params):
     with open('logs/mae.csv', 'a') as f:
         f.write("{};{:.5f}\n".format(model_name, mae))
 
-    y_test_inv = y_test_inv[:, -1, 0]
-    preds_inv = preds_inv[:, -1, 0]
+    # print(y_test_inv.shape, preds_inv.shape)
+    if model_type == 'ed':
+        y_test_inv = y_test_inv[:, -1, 0]
+        preds_inv = preds_inv[:, -1, 0]
+    elif model_type == 'f':
+        y_test_inv = y_test_inv[:, 0]
+        preds_inv = preds_inv[:, 0]
+
     plt.plot(y_test_inv, label='actual', color='#fc6b00', linestyle='solid')
     plt.plot(preds_inv, label='predict', color='blue', linestyle='solid')
     plt.xlabel('time')
     plt.ylabel('value')
     plt.legend()
     plt.title('mae={:.2f}'.format(mae))
-    # plt.show()
-    plt.savefig('logs/' + model_name + '_predict.png')
+    plt.show()
+    # plt.savefig('logs/' + model_name + '_predict.png')
     plt.clf()
 
 
@@ -109,16 +126,16 @@ def mutil_running(list_configs, n_jobs=1):
 
 
 test_config = {
-    'sliding_encoder': 16,
-    'sliding_decoder': 2,
-    'layer_sizes_ed': [16, 4],
-    'layer_sizes_f': [16],
+    'sliding_encoder': 24,
+    'sliding_decoder': 1,
+    'layer_sizes_ed': [64],
+    'layer_sizes_f': [64, 16],
     'activation': 'tanh',
     'optimizer': 'rmsprop',
     'keep_probs': 0.95,
     'dropout': 0.05,
-    'batch_size': 8,
-    'learning_rate': 0.001,
+    'batch_size': 32,
+    'learning_rate': 0.01,
     'epochs': 500,
     'cell_type': 'lstm',
     'patience': 15
