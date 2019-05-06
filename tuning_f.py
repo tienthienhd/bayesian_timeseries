@@ -6,10 +6,11 @@ import multiprocessing as mp
 from sklearn.model_selection import ParameterGrid
 
 dict_config = {
-    "sliding_encoder": [8, 12, 16, 20, 24, 28, 32, 36, 40],
-    "sliding_decoder": [1, 2, 3, 4, 5, 6, 7],
-    "layer_sizes_ed": [[8], [16], [32], [64], [8, 4], [16, 8], [16, 4], [32, 16], [32, 4], [64, 32], [64, 16]],
-    "layer_sizes_f": [[4], [8], [16], [32], [64], [8, 4], [16, 8], [16, 4], [32, 16], [32, 8], [64, 32], [64, 16], [64, 8]],
+    "sliding_encoder": [24, 32],
+    "sliding_decoder": [1, 2],
+    "layer_sizes_ed": [[8], [64], [16, 8], [32, 16]],
+    "layer_sizes_f": [[4], [8], [16], [32], [64], [8, 4], [16, 8], [16, 4], [32, 16], [32, 8], [64, 32], [64, 16],
+                      [64, 8]],
     "activation": ['tanh', 'sigmoid'],
     "optimizer": ['adam', 'rmsprop'],
     "batch_size": [8, 16, 32, 64],
@@ -21,27 +22,25 @@ dict_config = {
     "patience": [15],
 }
 
-def run(params):
-    model_type = 'f'
-    # pprint.pprint(params)
-
+def run_ed(params):
     dataset = GgTraceDataSet2('datasets/5.csv', params['sliding_encoder'], params['sliding_decoder'])
     params['n_dim'] = dataset.n_dim
-    if model_type == 'ed':
-        data = dataset.get_data_ed()
-        train, test = split_data(data, test_size=0.2)
-        x_train = (train[0], train[1])
-        y_train = train[2]
-        x_test = (test[0], test[1])
-        y_test = test[2]
-    elif model_type == 'f':
-        data = dataset.get_data_forecast()
-        train, test = split_data(data, test_size=0.2)
-        x_train = train[0]
-        y_train = train[1]
-        x_test = test[0]
-        y_test = test[1]
 
+    data_ed = dataset.get_data_ed()
+    train_ed, test_ed = split_data(data_ed, test_size=0.2)
+    x_train_ed = train_ed[:2]
+    y_train_ed = train_ed[-1]
+
+    x_test_ed = test_ed[:2]
+    y_test_ed = test_ed[-1]
+
+    data_f = dataset.get_data_forecast()
+    train_f, test_f = split_data(data_f, test_size=0.2)
+    x_train_f = train_f[0]
+    y_train_f = train_f[-1]
+
+    x_test_f = test_f[0]
+    y_test_f = test_f[-1]
 
     model_name = "sle({})_sld({})_lsed({})_lsf({})_ac({})_opt({})_kp({})_drop({})_bs({})_lr({})_ct({})_pat({})".format(
         params['sliding_encoder'],
@@ -57,42 +56,25 @@ def run(params):
         params['cell_type'],
         params['patience']
     )
-    print('Running config: ' + model_name)
 
-    model = Model('logs/' + model_name)
-    model.build_model(params)
-    # model.restore()
-    history = model.train(x_train, y_train,
-                          batch_size=params['batch_size'],
-                          epochs=params['epochs'], verbose=1, model=model_type)
-    # model.save()
+    print('Runing config:' + model_name)
 
-    # plot history
-    # plt.plot(history['loss'], label='loss')
-    # plt.plot(history['val_loss'], label='val_loss')
-    # plt.legend()
-    # plt.xlabel('epoch')
-    # plt.ylabel('loss')
-    # plt.show()
-    # plt.savefig('logs/' + model_name + '_history.png')
-    # plt.clf()
+    model = Model('logs/' + model_name, params=params)
 
-    # plot predict
-    preds = model.predict(x_test, model=model_type)
+    model.train_ed(x_train_ed, y_train_ed, batch_size=params['batch_size'], epochs=params['epochs'], verbose=1)
+
+    model.train_f(x_train_f, y_train_f, batch_size=params['batch_size'], epochs=params['epochs'], verbose=1)
+
+    preds = model.predict_f(x_test_f)
     preds_inv = dataset.invert_transform(preds)
-    y_test_inv = dataset.invert_transform(y_test)
+    y_test_inv = dataset.invert_transform(y_test_f)
 
     mae = np.mean(np.abs(np.subtract(preds_inv, y_test_inv)))
     with open('logs/mae.csv', 'a') as f:
         f.write("{};{:.5f}\n".format(model_name, mae))
 
-    # print(y_test_inv.shape, preds_inv.shape)
-    if model_type == 'ed':
-        y_test_inv = y_test_inv[:, -1, 0]
-        preds_inv = preds_inv[:, -1, 0]
-    elif model_type == 'f':
-        y_test_inv = y_test_inv[:, 0]
-        preds_inv = preds_inv[:, 0]
+    preds_inv = preds_inv[:, 0]
+    y_test_inv = y_test_inv[:, 0]
 
     plt.plot(y_test_inv, label='actual', color='#fc6b00', linestyle='solid')
     plt.plot(preds_inv, label='predict', color='blue', linestyle='solid')
@@ -101,7 +83,7 @@ def run(params):
     plt.legend()
     plt.title('mae={:.2f}'.format(mae))
     plt.show()
-    # plt.savefig('logs/' + model_name + '_predict.png')
+    # plt.savefig('logs/' + str(mae) + "_" + model_name + '_predict_f.png')
     plt.clf()
 
 
@@ -118,7 +100,7 @@ def mutil_running(list_configs, n_jobs=1):
 
     for i in range(n_maps):
         list_configs_map = list_configs[i * config_per_map: (i + 1) * config_per_map]
-        pool.map(run, list_configs_map)
+        pool.map(run_ed, list_configs_map)
 
     pool.close()
     pool.join()
@@ -153,8 +135,6 @@ list_config = np.random.choice(list(ParameterGrid(dict_config)), size=args.n_con
 print(len(list_config))
 
 if args.test:
-    run(test_config)
+    run_ed(test_config)
 else:
     mutil_running(list_configs=list_config, n_jobs=args.n_jobs)
-
-
