@@ -82,8 +82,8 @@ def run_ed(params):
     plt.ylabel('value')
     plt.legend()
     plt.title('mae={:.2f}'.format(mae))
-    plt.show()
-    # plt.savefig('logs/' + str(mae) + "_" + model_name + '_predict_f.png')
+    # plt.show()
+    plt.savefig('logs/' + str(mae) + "_" + model_name + '_predict_f.png')
     plt.clf()
 
 
